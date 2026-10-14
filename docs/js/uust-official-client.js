@@ -48,19 +48,6 @@
       return Client.request(this.endpoint,fields,{fetch:this.fetch,signal});
     }
     static async request(endpoint,fields,{fetch:fetchImpl=root.fetch.bind(root),signal}={}) {
-      // GitHub Pages has no POST API. Read pre-fetched official HTML snapshots.
-      if (new URL(endpoint,root.location?.href || 'https://example.invalid').pathname.endsWith('/data/schedule/')) {
-        const id=Number(fields.group_id), week=Number(fields.week);
-        let filename;
-        if(fields.funct==='filter_group')filename='groups.html';
-        else if(Number.isSafeInteger(id)&&id>0&&fields.funct==='group_name')filename=`groups/${id}.html`;
-        else if(Number.isSafeInteger(id)&&id>0&&Number.isInteger(week)&&week>=1&&week<=60&&fields.funct==='group')filename=`weeks/${id}/${week}.html`;
-        else throw new Error('Некорректные параметры расписания');
-        const response=await fetchImpl(new URL(filename,endpoint).href,{method:'GET',signal:signal||AbortSignal.timeout(30000),cache:'no-cache'});
-        if(response.status===404)throw new Error('Расписание этой группы или недели ещё не опубликовано. GitHub Actions загружает группы по очереди; попробуйте позже.');
-        if(!response.ok)throw new Error(`Ошибка загрузки расписания: HTTP ${response.status}`);
-        return response.text();
-      }
       const response=await fetchImpl(endpoint,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8',Accept:'text/html'},body:new URLSearchParams(fields).toString(),signal:signal||AbortSignal.timeout(30000),cache:'no-store'});
       if(!response.ok) {
         let message = response.status === 404 || response.status === 501
