@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <title>УУНиТ Дневник — UUST Diary</title>
+  <link rel="stylesheet" href="css/styles.css?v=20261014-4">
+  <link rel="stylesheet" href="css/mobile.css?v=20261014-3">
+  <link rel="stylesheet" href="css/calendar.css?v=20261014-2">
+  <script defer src="vendor/marked.min.js?v=20261013-13"></script>
+  <!-- Classic scripts keep GitHub Pages hosting simple: no build step or server modules. -->
+  <script defer src="js/core.js?v=20261014-2"></script>
+  <script defer src="js/database.js?v=20261013-13"></script>
+  <script defer src="js/schedule-config.js?v=20261013-13"></script>
+  <script defer src="js/uust-official-parser.js?v=20261013-13"></script>
+  <script defer src="js/uust-official-seed.js?v=20261013-13"></script>
+  <script defer src="js/uust-official-client.js?v=20261013-13"></script>
+  <script defer src="js/schedule.js?v=20261013-13"></script>
+  <script defer src="js/markdown.js?v=20261013-13"></script>
+  <script defer src="js/mobile.js?v=20261014-1"></script>
+  <script defer src="js/calendar.js?v=20261014-2"></script>
+  <script defer src="js/render.js?v=20261014-5"></script>
+  <script defer src="js/lectures.js?v=20261014-2"></script>
+  <script defer src="js/settings.js?v=20261013-13"></script>
+  <script defer src="js/backup.js?v=20261014-2"></script>
+  <script defer src="js/events.js?v=20261013-13"></script>
+  <script defer src="js/init.js?v=20261013-13"></script>
+</head>
+<body>
+  <header>
+    <h1 id="currentDateTitle">📚</h1>
+    <div class="group-picker" id="groupPicker">
+      <label for="groupSearch" class="sr-only">Учебная группа</label>
+      <input id="groupSearch" type="text" placeholder="Выберите группу — поиск по названию" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="groupResults" aria-expanded="false">
+      <div id="groupResults" class="group-results hidden" role="listbox" aria-label="Учебные группы"></div>
+    </div>
+    <button class="btn secondary sm" id="refreshSchedule" title="Повторить загрузку недели">Повторить загрузку</button>
+    <div class="page-actions">
+      <div class="week-nav" id="weekNav">
+        <button class="btn secondary sm toolbar-icon" id="prevWeek" title="Предыдущая неделя" aria-label="Предыдущая неделя"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <span class="week-label" id="weekLabel"></span>
+        <button class="btn secondary sm toolbar-icon" id="nextWeek" title="Следующая неделя" aria-label="Следующая неделя"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+        <button class="btn secondary sm" id="todayBtn">Сегодня</button>
+      </div>
+
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-view="days">Расписание</button>
+      <button class="tab" data-view="subjects">Лекции по предметам</button>
+      <button class="tab" data-view="calendar">Календарь</button>
+    </div>
+    <button class="btn secondary sm toolbar-icon" id="settingsBtn" title="Настройки" aria-label="Настройки"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.76 2.18a1 1 0 0 1 1.98 0l.25 1.78a8.13 8.13 0 0 1 2.06.85l1.46-1.05a1 1 0 0 1 1.4.18l1.4 1.4a1 1 0 0 1 .18 1.4l-1.05 1.46c.38.65.66 1.34.85 2.06l1.78.25a1 1 0 0 1 0 1.98l-1.78.25a8.13 8.13 0 0 1-.85 2.06l1.05 1.46a1 1 0 0 1-.18 1.4l-1.4 1.4a1 1 0 0 1-1.4.18l-1.46-1.05a8.13 8.13 0 0 1-2.06.85l-.25 1.78a1 1 0 0 1-1.98 0l-.25-1.78a8.13 8.13 0 0 1-2.06-.85l-1.46 1.05a1 1 0 0 1-1.4-.18l-1.4-1.4a1 1 0 0 1-.18-1.4l1.05-1.46a8.13 8.13 0 0 1-.85-2.06l-1.78-.25a1 1 0 0 1 0-1.98l1.78-.25a8.13 8.13 0 0 1 .85-2.06L4.8 6.57a1 1 0 0 1 .18-1.4l1.4-1.4a1 1 0 0 1 1.4-.18l1.46 1.05c.65-.38 1.34-.66 2.06-.85l.25-1.78ZM12 8.1A3.9 3.9 0 1 0 12 15.9A3.9 3.9 0 0 0 12 8.1Z"/></svg></button>
+  </header>
+
+  <main>
+
+    <div id="scheduleStatus" class="schedule-status" role="status" aria-live="polite"></div>
+    <div id="daysView" class="board"></div>
+    <div id="subjectsView" class="board hidden"></div>
+    <div id="calendarView" class="calendar-view hidden"></div>
+  </main>
+
+  <div id="lectureModal" class="modal-overlay hidden">
+    <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="modalTitle">Лекция</h2>
+        <button class="btn secondary sm" id="closeModal">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header"><h2>Настройки</h2><button class="btn secondary sm" id="closeSettings">✕</button></div>
+      <div class="modal-body">
+        <div class="settings-row">
+          <div class="settings-copy"><strong>Масштаб приложения</strong></div>
+          <div class="settings-control scale-line"><input type="range" id="scaleRange" aria-label="Масштаб приложения" min="80" max="130" step="5" value="100"><output id="scaleValue" for="scaleRange">100%</output><button type="button" class="scale-reset" id="resetScale" title="Вернуть масштаб 100%">Сбросить</button></div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-copy"><strong id="appearanceLabel">Внешний вид</strong></div>
+          <div class="appearance-switch" role="group" aria-labelledby="appearanceLabel">
+            <button type="button" data-appearance-mode="light" aria-pressed="false">Светлый</button>
+            <button type="button" data-appearance-mode="dark" aria-pressed="false">Тёмный</button>
+          </div>
+        </div>
+        <div class="settings-row theme-settings-row">
+          <div class="settings-copy"><strong id="themeLabel">Тема</strong><span>Предпросмотр в выбранном внешнем виде</span></div>
+          <div id="themeGrid" class="theme-grid" role="group" aria-labelledby="themeLabel"></div>
+        </div>
+        <div class="settings-row" style="margin-top:18px; flex-direction:column; align-items:stretch; gap:10px;">
+          <div class="settings-copy">
+            <strong>Данные</strong>
+            <div style="font-size:0.82rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">
+              Автосохранение работает локально в этом браузере. Данные не синхронизируются между устройствами и могут быть потеряны при очистке данных приложения или браузера — регулярно экспортируйте резервную копию JSON.
+              Импорт полностью заменяет текущие данные содержимым выбранного файла.
+              Чтобы перенести данные на другое устройство, экспортируйте файл и импортируйте его там.
+            </div>
+          </div>
+          <div class="settings-control" style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn secondary" id="exportDataBtn">Экспорт в JSON</button>
+            <button type="button" class="btn secondary" id="importDataBtn">Импорт из JSON</button>
+            <input type="file" id="importDataFile" accept="application/json,.json" class="file-input-hidden">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+</body>
+</html>

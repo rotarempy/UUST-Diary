@@ -1,0 +1,13 @@
+import {cp,rm,mkdir,readFile,writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import path from 'node:path';
+import {build} from 'esbuild';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const output=path.join(root,'www');
+await rm(output,{recursive:true,force:true});await mkdir(output,{recursive:true});
+await cp(path.join(root,'docs'),output,{recursive:true});
+await build({entryPoints:[path.join(root,'native/platform.js')],outfile:path.join(output,'js/platform.js'),bundle:true,format:'iife',target:'es2022',minify:true});
+let html=await readFile(path.join(output,'index.html'),'utf8');
+html=html.replace('<script defer src="js/core.js', '<script defer src="js/platform.js"></script>\n  <script defer src="js/core.js');
+await writeFile(path.join(output,'index.html'),html);
+console.log('Общий интерфейс собран в www из docs.');

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">УУНиТ Дневник</string>
+    <string name="title_activity_main">УУНиТ Дневник</string>
+    <string name="package_name">ru.uust.lectures</string>
+    <string name="custom_url_scheme">ru.uust.lectures</string>
+</resources>

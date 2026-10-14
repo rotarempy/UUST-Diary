@@ -1,0 +1,69 @@
+{
+  "name": "uust-diary",
+  "version": "1.0.0",
+  "description": "УУНиТ Дневник (UUST Diary) — расписание, лекции, домашние задания и учебный календарь",
+  "author": "UUST Diary",
+  "private": true,
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && electron .",
+    "desktop:dir": "npm run build && electron-builder --dir",
+    "desktop:win": "npm run build && electron-builder --win nsis",
+    "desktop:linux": "npm run build && electron-builder --linux AppImage",
+    "desktop:mac": "npm run build && electron-builder --mac dmg",
+    "android:sync": "npm run build && node scripts/android.mjs sync",
+    "android:open": "npm run android:sync && cap open android",
+    "android:apk": "npm run android:sync && node scripts/android.mjs apk",
+    "test": "npm run build && node --test tests/native/*.test.cjs && node tests/web/dom.test.cjs && node --test tests/web/official.test.cjs tests/web/appearance.test.cjs"
+  },
+  "build": {
+    "appId": "ru.uust.lectures",
+    "productName": "УУНиТ Дневник",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "www/**/*",
+      "desktop/**/*",
+      "package.json",
+      "assets/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "UUST-Diary-${version}-Setup.${ext}"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Education",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.education"
+    }
+  },
+  "devDependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/cli": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/file-viewer": "2.0.4",
+    "@capacitor/filesystem": "8.1.4",
+    "@capacitor/share": "8.0.3",
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2",
+    "fake-indexeddb": "6.2.5",
+    "jsdom": "30.1.2"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

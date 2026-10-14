@@ -1,0 +1,9 @@
+# Keep text files consistent across Windows, macOS and Linux
+* text=auto
+*.bat text eol=crlf
+*.sh text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+*.png binary
+*.ico binary
+*.jar binary
