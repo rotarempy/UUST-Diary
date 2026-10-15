@@ -24,6 +24,7 @@ async function create() {
   const dom = new JSDOM(html, { url: 'http://localhost/',
     runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:console,
     beforeParse(window) {
+      window.LECTURES_SCHEDULE_CONFIG={endpoint:'http://localhost/schedule-source',bootstrapWeek:7};
       const OriginalDate = window.Date;
       window.Date = class extends OriginalDate { constructor(...args) { super(...(args.length ? args : ['2026-10-12T17:00:00Z'])); } static now() { return Date.parse('2026-10-12T17:00:00Z'); } };
       window.structuredClone = structuredClone;

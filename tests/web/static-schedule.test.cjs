@@ -1,0 +1,71 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const source=name=>fs.readFileSync(path.join(__dirname,'../../docs/js',name),'utf8');
+test('web defaults to local files; native configuration is preserved',()=>{
+ const context=vm.createContext({window:{},location:{href:'https://user.github.io/diary/'},URL});
+ vm.runInContext(source('schedule-config.js'),context);
+ assert.equal(context.window.LECTURES_SCHEDULE_CONFIG.staticOnly,true);
+ assert.equal(context.window.LECTURES_SCHEDULE_CONFIG.endpoint,'https://user.github.io/diary/data/schedule/');
+ const native={endpoint:'https://isu.uust.ru/source'};
+ context.window.LECTURES_SCHEDULE_CONFIG=native;
+ vm.runInContext(source('schedule-config.js'),context);
+ assert.equal(context.window.LECTURES_SCHEDULE_CONFIG,native);
+});
+test('published JSON is primary and never fetches parser source',async()=>{
+ const context=vm.createContext({URL,AbortController,AbortSignal,Intl,Date,setTimeout,clearTimeout,LECTURES_SCHEDULE_CONFIG:{staticOnly:true},fetch:()=>{throw new Error('Unexpected network request');}});
+ vm.runInContext('let publishedSchedule = '+JSON.stringify({groups:[{id:1,weeks:[],snapshots:{'2026-10-12':{lessons:[],slots:[],lastSync:123}}}]})+';',context);
+ vm.runInContext(source('uust-official-client.js'),context);
+ const client=new context.UustOfficialClient({groupId:1,endpoint:'https://example.com/data/schedule/',storage:null,seed:null});
+ const result=await client.sync({date:'2026-10-12'});
+ assert.equal(result.hasCache,true);assert.equal(result.lastSync,123);
+ assert.equal((await client.sync({date:'2026-11-02'})).hasCache,false);
+});
+test('schedule export includes all cached groups without personal notes',()=>{
+ const cache={version:1,groupId:22,weeks:[],snapshots:{'2026-10-12':{lessons:[]}}};
+ const context=vm.createContext({window:{},localStorage:{'lectures.official.v1:old:22':JSON.stringify(cache),getItem(key){return this[key];}},groupList:[{id:22,name:'Группа 22'}],db:{selectedGroup:null,lectures:[{text:'PRIVATE'}]},scheduleClients:new Map(),Date});
+ vm.runInContext(source('transfer.js'),context);
+ const result=context.collectSchedule();
+ assert.equal(result.groups[0].id,22);assert.equal(result.groups[0].name,'Группа 22');
+ assert.equal(JSON.stringify(result).includes('PRIVATE'),false);
+});
+test('web UI loads published groups and colored lessons using local GET only',async()=>{
+ const {JSDOM}=require('jsdom');
+ const {indexedDB}=require('fake-indexeddb');
+ const docs=path.join(__dirname,'../../docs');
+ let html=fs.readFileSync(path.join(docs,'index.html'),'utf8');
+ const scripts=[...html.matchAll(/<script defer src="([^"]+)"><\/script>/g)].map(m=>fs.readFileSync(path.join(docs,m[1].split('?')[0]),'utf8'));
+ html=html.replace(/<script defer src="[^"]+"><\/script>/g,'');
+ const calls=[];
+ const today=new Date(),day=today.getDay();today.setDate(today.getDate()-(day===0?6:day-1));
+ const iso=today.toISOString().slice(0,10);
+ const snapshot={format:'uust-schedule-v1',groups:[{id:123,name:'Тест-123',weeks:[],snapshots:{[iso]:{lessons:[{occurrenceId:'test',date:iso,title:'Тестовая пара',type:'Лабораторная работа',numbers:[1],timeStart:'08:00',timeEnd:'09:30'}],slots:[],lastSync:1}}}]};
+ const dom=new JSDOM(html,{url:'https://example.org/diary/',runScripts:'outside-only'});
+ const w=dom.window;
+ w.indexedDB=indexedDB;w.structuredClone=structuredClone;w.AbortController=AbortController;w.AbortSignal=AbortSignal;
+ w.fetch=async(url,options={})=>{calls.push([String(url),options.method||'GET']);return {ok:true,json:async()=>snapshot};};
+ w.eval(scripts.join('\n'));
+ try {
+  for(let i=0;i<100&&!w.document.querySelector('.welcome');i++)await new Promise(r=>setTimeout(r,10));
+  await w.selectGroup({id:123,name:'Тест-123'});
+  assert.ok(w.document.querySelector('.lesson-lab'));
+  assert.equal(w.document.getElementById('scheduleStatus').textContent,'');
+  assert.equal(w.document.getElementById('lanSettings').hidden,true);
+  assert.deepEqual(calls,[['https://example.org/diary/data/schedule/snapshot.json','GET']]);
+  const payload={format:'uust-diary-sync-v1',data:{subjects:[],lectures:[{id:'received',title:'Заметка',attachments:[]}],homeworks:[],exams:[],drafts:{}},schedule:snapshot};
+  w.confirm=()=>false;
+  assert.equal(await w.receiveSync(payload),false);
+  assert.equal(w.syncPayload().data.lectures.length,0);
+  w.confirm=()=>true;
+  assert.equal(await w.receiveSync(payload),true);
+  assert.equal(w.syncPayload().data.lectures[0].id,'received');
+  const setItem=w.Storage.prototype.setItem;
+  w.Storage.prototype.setItem=function(){throw new Error('Quota exceeded');};
+  const failed=structuredClone(payload);failed.data.lectures=[{id:'must-not-save'}];
+  await assert.rejects(w.receiveSync(failed),/Quota/);
+  assert.equal(w.syncPayload().data.lectures[0].id,'received');
+  w.Storage.prototype.setItem=setItem;
+ }finally{w.close();}
+});

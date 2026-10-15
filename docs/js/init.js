@@ -4,6 +4,8 @@ function ufaToday() {
 }
 (async function init() {
   updateCurrentDateTitle();
+  bindTransfers();
+  await loadPublishedSchedule();
   let loaded = await loadDataFromIDB();
   if (!loaded && loadFromLegacyLocalStorage()) await saveDB();
   db = normalizeDB(db); restoreSelectedGroup();

@@ -1,4 +1,4 @@
-import {Capacitor,CapacitorHttp} from '@capacitor/core';
+import {Capacitor,CapacitorHttp,registerPlugin} from '@capacitor/core';
 import {Filesystem,Directory,Encoding} from '@capacitor/filesystem';
 import {Share} from '@capacitor/share';
 import {App} from '@capacitor/app';
@@ -6,6 +6,7 @@ import {FileViewer} from '@capacitor/file-viewer';
 const SOURCE='https://isu.uust.ru/module/schedule/schedule_2024_script.php';
 const native=Capacitor.isNativePlatform();
 const desktop=window.LecturesDesktop;
+const LanSync=registerPlugin('LanSync');
 const webFetch=window.fetch.bind(window);
 function abortable(task,signal){
  if(!signal)return task;
@@ -28,6 +29,14 @@ if(native||desktop){
  };
  window.LecturesPlatform={
   isAndroid:native,
+  async saveSnapshot(text){
+   if(desktop)return desktop.saveSnapshot(text);
+   await Filesystem.writeFile({path:'UUST-Diary/schedule/snapshot.json',data:text,directory:Directory.Documents,encoding:Encoding.UTF8,recursive:true});
+   return {saved:true};
+  },
+  lan(action,options={}) {
+   return desktop?desktop.lan(action,options):LanSync.execute({action,...options});
+  },
   async saveBackup(name,text){
    if(desktop)return desktop.saveBackup(name,text);
    const result=await Filesystem.writeFile({path:name,data:text,directory:Directory.Cache,encoding:Encoding.UTF8});

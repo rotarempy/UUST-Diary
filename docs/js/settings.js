@@ -81,5 +81,40 @@ function applyAppearance(value, save = true) {
 }
 let appearance = loadAppearance();
 window.addEventListener('resize', () => applyAppearance(appearance, false));
-function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); }
-function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); }
+function openSettingsModal() { document.getElementById('settingsModal').classList.remove('hidden'); startLanDiscovery(); }
+function closeSettingsModal() { document.getElementById('settingsModal').classList.add('hidden'); stopLanDiscovery(); }
+
+async function clearAllAppData() {
+  if (resettingAppData || !window.confirm('Удалить все данные приложения на этом устройстве? Будут удалены лекции, ДЗ, экзамены, вложения, черновики, выбранная группа, сохранённое расписание и настройки. Отменить удаление нельзя. При необходимости сначала экспортируйте резервную копию JSON.')) return;
+  resettingAppData = true;
+  document.body.inert = true;
+  const clients = [...scheduleClients.values()];
+  const storages = clients.map(client => client.storage);
+  // Running network requests must not recreate the schedule cache.
+  clients.forEach(client => { client.storage = null; });
+  try {
+    if (typeof stopLanDiscovery === 'function') await stopLanDiscovery();
+    await saveQueue.catch(() => {});
+    const idb = await openIDB();
+    await new Promise((resolve, reject) => {
+      const tx = idb.transaction('data', 'readwrite');
+      tx.objectStore('data').clear();
+      tx.oncomplete = () => { idb.close(); resolve(); };
+      tx.onerror = tx.onabort = () => { idb.close(); reject(tx.error); };
+    });
+    // Remove only this application's keys, preserving other apps on the same origin.
+    for (const key of Object.keys(localStorage)) {
+      if (key === APPEARANCE_KEY || key === LS_LEGACY || key.startsWith('lectures.official.v1:')) localStorage.removeItem(key);
+    }
+    materialState = null;
+    db = normalizeDB({});
+    window.db = db;
+    window.location.reload();
+  } catch (error) {
+    clients.forEach((client, i) => { client.storage = storages[i]; });
+    resettingAppData = false;
+    document.body.inert = false;
+    console.error('Failed to clear application data', error);
+    showToast('Не удалось полностью очистить данные. Повторите попытку.', 5000);
+  }
+}

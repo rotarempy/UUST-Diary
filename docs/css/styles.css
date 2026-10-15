@@ -1000,3 +1000,46 @@ html:not(.mobile-layout) #daysView {
   padding-bottom:0;
 }
 html:not(.mobile-layout) .timetable-scroll { max-height:100%; }
+
+/* Stable lesson colors across all themes, including mobile cards. */
+:root {
+  --lesson-blue-bg:#e8f1ff; --lesson-blue-border:#4179c4; --lesson-blue-text:#193f73;
+  --lesson-yellow-bg:#fff4c7; --lesson-yellow-border:#a77a13; --lesson-yellow-text:#624600;
+  --lesson-green-bg:#e6f5e9; --lesson-green-border:#39804c; --lesson-green-text:#245b33;
+  --lesson-purple-bg:#f2e8ff; --lesson-purple-border:#9360c6; --lesson-purple-text:#62368a;
+}
+:root[data-appearance="dark"] {
+  --lesson-blue-bg:#192f4b; --lesson-blue-border:#72a8ef; --lesson-blue-text:#d0e4ff;
+  --lesson-yellow-bg:#3c3319; --lesson-yellow-border:#d9b34c; --lesson-yellow-text:#ffeba6;
+  --lesson-green-bg:#1c3527; --lesson-green-border:#76bc8c; --lesson-green-text:#c9efd5;
+  --lesson-purple-bg:#322342; --lesson-purple-border:#bc8ce8; --lesson-purple-text:#ecd6ff;
+}
+.lesson-lecture { --lesson-bg:var(--lesson-blue-bg); --lesson-border:var(--lesson-blue-border); --lesson-text:var(--lesson-blue-text); }
+.lesson-practice { --lesson-bg:var(--lesson-yellow-bg); --lesson-border:var(--lesson-yellow-border); --lesson-text:var(--lesson-yellow-text); }
+.lesson-other { --lesson-bg:var(--lesson-green-bg); --lesson-border:var(--lesson-green-border); --lesson-text:var(--lesson-green-text); }
+.lesson-lab { --lesson-bg:var(--lesson-purple-bg); --lesson-border:var(--lesson-purple-border); --lesson-text:var(--lesson-purple-text); }
+.pair-card:is(.lesson-lecture,.lesson-practice,.lesson-lab,.lesson-other) {
+  background:var(--lesson-bg); border-color:var(--lesson-border);
+  border-left:4px solid var(--lesson-border); color:var(--lesson-text);
+}
+.pair-card:is(.lesson-lecture,.lesson-practice,.lesson-lab,.lesson-other):hover {
+  background:var(--lesson-bg); border-color:var(--lesson-border);
+  box-shadow:inset 0 0 0 1px var(--lesson-border);
+}
+.pair-card:is(.lesson-lecture,.lesson-practice,.lesson-lab,.lesson-other) :is(.pair-time,.pair-details) { color:var(--lesson-text); }
+
+#lanSettings { border-top:1px solid var(--border); padding-top:16px; margin-top:16px; }
+#lanSettings[hidden], #lanHostControls[hidden] { display:none; }
+#lanSettings p { color:var(--text-muted); font-size:.82rem; line-height:1.5; }
+#lanSettings label { display:block; margin:10px 0; }
+#lanSettings input { display:block; width:100%; margin-top:4px; }
+#lanSettings .btn { margin:4px 2px 4px 0; }
+#exportScheduleBtn { font-size:.75rem; color:var(--text-muted); }
+
+.lan-device { display:flex; flex-direction:column; gap:6px; width:100%; margin:8px 0; padding:14px; text-align:left; color:var(--text); background:var(--surface2); border:1px solid var(--border); border-radius:12px; cursor:pointer; }
+.lan-device:hover { border-color:var(--accent); }
+.lan-device span { color:var(--text-muted); font-size:.8rem; }
+.lan-device:disabled { opacity:.6; cursor:wait; }
+#lanOwnCount { font-weight:600; color:var(--text); }
+#lanDevices { overflow-wrap:anywhere; }
+#lanSettings .lan-note { font-size:.75rem; }

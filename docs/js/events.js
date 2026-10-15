@@ -74,3 +74,5 @@ document.addEventListener('visibilitychange', () => {
     updateCurrentDateTitle();
   }
 });
+
+document.getElementById('clearAllDataBtn').onclick = clearAllAppData;

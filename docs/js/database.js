@@ -32,13 +32,16 @@ function openIDB() {
   });
 }
 
+let resettingAppData = false;
 async function idbPut(store, key, value) {
+  if (resettingAppData) return;
   const idb = await openIDB();
+  if (resettingAppData) { idb.close(); return; }
   const tx = idb.transaction(store, 'readwrite');
   tx.objectStore(store).put(value, key);
   return new Promise((res, rej) => {
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
+    tx.oncomplete = () => { idb.close(); res(); };
+    tx.onerror = tx.onabort = () => { idb.close(); rej(tx.error); };
   });
 }
 

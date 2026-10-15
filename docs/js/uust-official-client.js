@@ -81,6 +81,13 @@
       return next;
     }
     async _sync(iso,signal) {
+      if (root.LECTURES_SCHEDULE_CONFIG?.staticOnly && typeof publishedSchedule !== 'undefined' && publishedSchedule) {
+        const group=publishedSchedule.groups.find(g=>g.id===this.groupId);
+        this.weeks=group?.weeks || this.weeks;
+        this.snapshots={...this.snapshots,...group?.snapshots};
+        this.warning=null;
+        return {updated:true,...this.getStatus(iso)};
+      }
       const controller=new AbortController();const abort=()=>controller.abort(signal.reason);
       if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});
       const timer=setTimeout(()=>controller.abort(new Error('Источник не ответил вовремя')),30000);

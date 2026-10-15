@@ -5,6 +5,9 @@ const fs=require('node:fs/promises');
 const {SOURCE,validateForm}=require('./schedule.cjs');
 protocol.registerSchemesAsPrivileged([{scheme:'lectures',privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true}}]);
 const ORIGIN='lectures://app';
+const {createLan}=require('./lan.cjs');
+const lan=createLan();
+let lanLifecycle=Promise.resolve();
 let win;
 function trusted(event){if(!event.senderFrame||!event.senderFrame.url.startsWith(ORIGIN+'/')||event.senderFrame!==event.sender.mainFrame)throw new Error('Недопустимый вызов');}
 function external(url){try{const u=new URL(url);if(u.protocol==='https:')shell.openExternal(u.href);}catch{}}
@@ -37,6 +40,20 @@ app.whenReady().then(async()=>{
   if(typeof name!=='string'||!/^(?:lectures|uust-diary)-backup-\d{4}-\d{2}-\d{2}\.json$/.test(name)||typeof text!=='string'||Buffer.byteLength(text)>200*1024*1024)throw new Error('Неверная резервная копия');
   const result=await dialog.showSaveDialog(win,{defaultPath:name,filters:[{name:'Резервная копия УУНиТ Дневник',extensions:['json']}]});
   if(result.canceled)return {saved:false};await fs.writeFile(result.filePath,text,'utf8');return {saved:true};
+ });
+ ipcMain.handle('lectures:lan',async(event,action,...args)=>{
+  trusted(event);
+  if(action==='start'||action==='stop'){
+   const next=lanLifecycle.catch(()=>{}).then(()=>lan[action](args[0]));lanLifecycle=next;return next;
+  }
+  if(['list','pending','decide','send'].includes(action))return lan[action](args[0]);
+  throw new Error('Неизвестная операция');
+ });
+ ipcMain.handle('lectures:snapshot',async(event,text)=>{
+  trusted(event);if(typeof text!=='string'||Buffer.byteLength(text)>200*1024*1024)throw new Error('Слишком большой файл');
+  const result=await dialog.showOpenDialog(win,{title:'Выберите папку docs/data/schedule проекта',properties:['openDirectory','createDirectory']});
+  if(result.canceled)return {saved:false};
+  await fs.writeFile(path.join(result.filePaths[0],'snapshot.json'),text,'utf8');return {saved:true};
  });
  await createWindow();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)createWindow();});
 });

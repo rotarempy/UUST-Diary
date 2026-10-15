@@ -15,7 +15,7 @@
     "android:sync": "npm run build && node scripts/android.mjs sync",
     "android:open": "npm run android:sync && cap open android",
     "android:apk": "npm run android:sync && node scripts/android.mjs apk",
-    "test": "npm run build && node --test tests/native/*.test.cjs && node tests/web/dom.test.cjs && node --test tests/web/official.test.cjs tests/web/appearance.test.cjs"
+    "test": "npm run build && node --test tests/native/*.test.cjs && node tests/web/dom.test.cjs && node --test tests/web/official.test.cjs tests/web/appearance.test.cjs tests/web/data-reset.test.cjs tests/web/static-schedule.test.cjs tests/web/lan-ui.test.cjs"
   },
   "build": {
     "appId": "ru.uust.lectures",

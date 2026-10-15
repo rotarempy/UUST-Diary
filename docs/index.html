@@ -5,7 +5,7 @@
   <meta name="color-scheme" content="light dark">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
   <title>УУНиТ Дневник — UUST Diary</title>
-  <link rel="stylesheet" href="css/styles.css?v=20261014-4">
+  <link rel="stylesheet" href="css/styles.css?v=20261015-discovery">
   <link rel="stylesheet" href="css/mobile.css?v=20261014-3">
   <link rel="stylesheet" href="css/calendar.css?v=20261014-2">
   <script defer src="vendor/marked.min.js?v=20261013-13"></script>
@@ -20,10 +20,11 @@
   <script defer src="js/markdown.js?v=20261013-13"></script>
   <script defer src="js/mobile.js?v=20261014-1"></script>
   <script defer src="js/calendar.js?v=20261014-2"></script>
-  <script defer src="js/render.js?v=20261014-5"></script>
+  <script defer src="js/render.js?v=20261015-green"></script>
   <script defer src="js/lectures.js?v=20261014-2"></script>
-  <script defer src="js/settings.js?v=20261013-13"></script>
+  <script defer src="js/settings.js?v=20261015-discovery"></script>
   <script defer src="js/backup.js?v=20261014-2"></script>
+  <script defer src="js/transfer.js?v=20261015-discovery"></script>
   <script defer src="js/events.js?v=20261013-13"></script>
   <script defer src="js/init.js?v=20261013-13"></script>
 </head>
@@ -91,6 +92,15 @@
           <div class="settings-copy"><strong id="themeLabel">Тема</strong><span>Предпросмотр в выбранном внешнем виде</span></div>
           <div id="themeGrid" class="theme-grid" role="group" aria-labelledby="themeLabel"></div>
         </div>
+        <section id="lanSettings" hidden aria-labelledby="lanTitle">
+          <h3 id="lanTitle">Устройства в локальной сети</h3>
+          <p id="lanOwnCount" aria-live="polite"></p>
+          <p>Откройте настройки приложения на обоих устройствах. Нажмите на устройство, чтобы отправить ему все данные. Получатель должен подтвердить замену своих данных.</p>
+          <div id="lanDevices" aria-label="Доступные устройства"></div>
+          <button type="button" class="btn secondary sm" id="lanRefresh">Обновить список</button>
+          <p id="lanStatus" role="status"></p>
+          <p class="lan-note">В списке только устройства с открытыми настройками UUST Diary. При закрытии настроек обнаружение выключается. Используйте доверенную сеть.</p>
+        </section>
         <div class="settings-row" style="margin-top:18px; flex-direction:column; align-items:stretch; gap:10px;">
           <div class="settings-copy">
             <strong>Данные</strong>
@@ -103,6 +113,8 @@
           <div class="settings-control" style="display:flex; gap:8px; flex-wrap:wrap;">
             <button type="button" class="btn secondary" id="exportDataBtn">Экспорт в JSON</button>
             <button type="button" class="btn secondary" id="importDataBtn">Импорт из JSON</button>
+            <button type="button" class="btn secondary sm" id="exportScheduleBtn">Скачать данные расписания</button>
+            <button type="button" class="btn danger" id="clearAllDataBtn">Очистить все данные приложения</button>
             <input type="file" id="importDataFile" accept="application/json,.json" class="file-input-hidden">
           </div>
         </div>

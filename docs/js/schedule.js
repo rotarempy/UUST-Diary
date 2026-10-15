@@ -22,6 +22,9 @@ function normalizeGroups(rows) {
   return [...unique.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru', { numeric: true }));
 }
 async function loadGroups(force = false) {
+  if (scheduleConfig.staticOnly && publishedSchedule) {
+    groupList = normalizeGroups(publishedSchedule.groups); groupError = ''; renderGroupResults(); return;
+  }
   if (groupLoading) return groupLoading;
   groupLoading = (async () => {
     if (!force) {
@@ -39,7 +42,7 @@ async function loadGroups(force = false) {
       try { await idbPut('data', 'schedule_groups:' + scheduleBaseUrl, { groups: groupList }); } catch (_) {}
     } catch (error) {
       if (!groupList.length && window.UUST_OFFICIAL_SEED?.groups) groupList = normalizeGroups(UUST_OFFICIAL_SEED.groups);
-      groupError = (error.message || 'Источник недоступен') + (groupList.length ? '. Доступен сохранённый список групп.' : '. Не удалось загрузить группы.');
+      groupError = scheduleConfig.staticOnly ? '' : (error.message || 'Источник недоступен') + (groupList.length ? '. Доступен сохранённый список групп.' : '. Не удалось загрузить группы.');
     }
     renderGroupResults();
   })().finally(() => { groupLoading = null; });
@@ -127,11 +130,11 @@ async function refreshSchedule({ force = false } = {}) {
     const requestedDate = toISODate(currentWeekStart);
     const result = await client.sync({ date: requestedDate, force });
     if (refreshId !== scheduleRefreshId || client !== scheduleClient || requestedMonday !== startOfWeek(new Date(currentWeekStart)).getTime()) return;
-    scheduleMessage = result.reason === 'empty-response' ? 'Источник вернул пустой ответ. Сохранённое расписание оставлено.' : result.warning || '';
+    scheduleMessage = scheduleConfig.staticOnly ? '' : result.reason === 'empty-response' ? 'Источник вернул пустой ответ. Сохранённое расписание оставлено.' : result.warning || '';
   } catch (error) {
     if (refreshId !== scheduleRefreshId || client !== scheduleClient || requestedMonday !== startOfWeek(new Date(currentWeekStart)).getTime()) return;
     const reason = error.name === 'TimeoutError' || error.name === 'AbortError' ? 'Источник не ответил вовремя' : error.message || 'Ошибка соединения';
-    scheduleMessage = 'Не удалось обновить расписание: ' + reason + '. ' + (client.getStatus(toISODate(currentWeekStart)).hasCache ? 'Показана сохранённая версия этой недели.' : 'Для этой недели нет сохранённых данных. Проверьте соединение с источником.');
+    scheduleMessage = scheduleConfig.staticOnly ? '' : 'Не удалось обновить расписание: ' + reason + '. ' + (client.getStatus(toISODate(currentWeekStart)).hasCache ? 'Показана сохранённая версия этой недели.' : 'Для этой недели нет сохранённых данных. Проверьте соединение с источником.');
 
   } finally {
     if (refreshId === scheduleRefreshId && client === scheduleClient) { scheduleBusy = false; render(); }
